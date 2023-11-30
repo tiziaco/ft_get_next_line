@@ -6,7 +6,7 @@
 /*   By: tiacovel <tiacovel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/28 19:27:30 by tiacovel          #+#    #+#             */
-/*   Updated: 2023/11/29 17:40:34 by tiacovel         ###   ########.fr       */
+/*   Updated: 2023/11/30 15:03:55 by tiacovel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,44 +81,64 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 	return (newstr);
 }
 
-// END OF THE OUTILS *******************
-
-char	*check_line(char *stach)
+char	*ft_strchr(const char *str, int c)
 {
-	int	size;
-
-	size = 0;
-	while (*stach != '\n')
+	while ((char)c != *str)
 	{
-		if (*stach == 0)
+		if (!*str)
 			return (NULL);
-		stach++;
-		
+		str++;
 	}
-	return (size);
+	return ((char *)str);
 }
 
-char	*get_next_line(int fd)
+// END OF THE OUTILS *******************
+
+char *get_line(char *stach)
 {
-	static char	*stach;
+	char *line;
+	int size = 0;
+	while (stach[size] != '\n' && stach[size] != '\0')
+		size++;
+	line = ft_substr(stach, 0, size);
+	return (line);
+}
+
+char *get_next_line(int fd)
+{
+	static char	*stach = NULL;
 	char		buffer[BUFFER_SIZE];
 	char		*next_line;
 	int			bytes_read;
-	int			line_size;
 
 	if (fd < 0)
 		return (NULL);
-	stach = malloc(sizeof(char)*0);
 	if (!stach)
-		return (NULL);
-	while (1)
 	{
-		bytes_read = read(fd, buffer, sizeof(buffer));
-		stach = ft_strjoin(stach, buffer);
-		next_line = check_line(buffer);
+		stach = malloc(BUFFER_SIZE + 1);
+		if (!stach)
+			return (NULL);
+		stach[0] = '\0';
 	}
+	while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
+	{
+		buffer[bytes_read] = '\0';
+		stach = ft_strjoin(stach, buffer);
+		if (ft_strchr(stach, '\n') != NULL)
+			break ;
+	}
+	if (bytes_read == 0 && stach[0] == '\0')
+	{
+		free(stach);
+		stach = NULL;
+		return (NULL);
+	}
+	next_line = get_line(stach);
+	stach = ft_strchr(stach, '\n');
+	stach++;
 	return (next_line);
 }
+
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -126,20 +146,18 @@ int main (void)
 {
 	int fd;
 	char *line;
-	char test[6] = "Hello";
 
-	/* fd = open("test.txt", O_RDWR);
+	fd = open("test.txt", O_RDWR);
 	if (fd == -1)
 		printf("Error opening the file!!");
-	line = get_next_line(fd);
-	close(fd); */
+
+	for (size_t i = 0; i < 12; i++)
+	{
+		line = get_next_line(fd);
+		printf("%s\n", line);
+	}
 	
-	line = malloc(sizeof(char)*0);
-	if (!line)
-		return (0);
-	line = ft_strjoin(line, test);
-	printf("TEST: %s", line);
-	/* int len = ft_strlen(line);
-	printf("TEST: %d", len); */
+	close(fd);
+
 	return (0);
 }
