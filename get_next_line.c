@@ -6,7 +6,7 @@
 /*   By: tiacovel <tiacovel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/28 19:27:30 by tiacovel          #+#    #+#             */
-/*   Updated: 2023/11/30 15:03:55 by tiacovel         ###   ########.fr       */
+/*   Updated: 2023/11/30 17:59:55 by tiacovel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ size_t	ft_strlen(const char *str)
 	return (i);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*ft_strjoin(char *s1, char const *s2)
 {
 	char	*new;
 	int		i;
@@ -49,6 +49,7 @@ char	*ft_strjoin(char const *s1, char const *s2)
 		j++;
 	}
 	new[i] = '\0';
+	//free(s1);
 	return (new);
 }
 
@@ -94,22 +95,51 @@ char	*ft_strchr(const char *str, int c)
 
 // END OF THE OUTILS *******************
 
-char *get_line(char *stach)
+void	fill_stach(int fd, char **stach)
 {
-	char *line;
-	int size = 0;
-	while (stach[size] != '\n' && stach[size] != '\0')
+	char	buffer[BUFFER_SIZE];
+	char	*tmp;
+	int		bytes_read;
+
+	while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
+	{
+		buffer[bytes_read] = '\0';
+		tmp = ft_strjoin(*stach, buffer);
+		free(*stach);
+		*stach = tmp;
+		if (ft_strchr(*stach, '\n') != NULL)
+		{
+			break ;
+		}
+	}
+	if (bytes_read == 0 && (*stach)[0] == '\0')
+	{
+		free(*stach);
+		*stach = NULL;
+	}
+}
+
+char	*get_line(char **stach)
+{
+	char	*line;
+	int		size;
+
+	size = 0;
+	while ((*stach)[size] != '\n' && (*stach)[size] != '\0')
 		size++;
-	line = ft_substr(stach, 0, size);
+	line = ft_substr(*stach, 0, size);
+	if (ft_strchr(*stach, '\n') != NULL)
+	{	
+		*stach = ft_strchr(*stach, '\n');
+		(*stach)++;
+	}
 	return (line);
 }
 
-char *get_next_line(int fd)
+char	*get_next_line(int fd)
 {
 	static char	*stach = NULL;
-	char		buffer[BUFFER_SIZE];
 	char		*next_line;
-	int			bytes_read;
 
 	if (fd < 0)
 		return (NULL);
@@ -120,22 +150,10 @@ char *get_next_line(int fd)
 			return (NULL);
 		stach[0] = '\0';
 	}
-	while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
-	{
-		buffer[bytes_read] = '\0';
-		stach = ft_strjoin(stach, buffer);
-		if (ft_strchr(stach, '\n') != NULL)
-			break ;
-	}
-	if (bytes_read == 0 && stach[0] == '\0')
-	{
-		free(stach);
-		stach = NULL;
+	fill_stach(fd, &stach);
+	if (stach == NULL)
 		return (NULL);
-	}
-	next_line = get_line(stach);
-	stach = ft_strchr(stach, '\n');
-	stach++;
+	next_line = get_line(&stach);
 	return (next_line);
 }
 
@@ -155,6 +173,7 @@ int main (void)
 	{
 		line = get_next_line(fd);
 		printf("%s\n", line);
+		free(line);
 	}
 	
 	close(fd);
