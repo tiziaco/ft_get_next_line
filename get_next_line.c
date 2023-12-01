@@ -6,7 +6,7 @@
 /*   By: tiacovel <tiacovel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/28 19:27:30 by tiacovel          #+#    #+#             */
-/*   Updated: 2023/12/01 18:17:47 by tiacovel         ###   ########.fr       */
+/*   Updated: 2023/12/01 18:30:50 by tiacovel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,7 +130,7 @@ char	*get_tail(char *stach)
 	return (next_stach);
 }
 
-char	*get_line(char *stach)
+char	*fill_line(char *stach)
 {
 	char	*line;
 	int		i;
@@ -162,12 +162,12 @@ char	*get_next_line(int fd)
 	stach = fill_stach(fd, stach);
 	if (!stach)
 		return (NULL);
-	next_line = get_line(stach);
+	next_line = fill_line(stach);
 	stach = get_tail(stach);
 	return (next_line);
 }
 
-/* #include <fcntl.h>
+#include <fcntl.h>
 #include <stdio.h>
 int main (void)
 {
@@ -188,4 +188,4 @@ int main (void)
 	close(fd);
 
 	return (0);
-} */
+}
