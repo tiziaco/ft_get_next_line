@@ -6,7 +6,7 @@
 /*   By: tiacovel <tiacovel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/28 19:27:30 by tiacovel          #+#    #+#             */
-/*   Updated: 2023/11/30 17:59:55 by tiacovel         ###   ########.fr       */
+/*   Updated: 2023/12/01 15:57:40 by tiacovel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,33 +93,76 @@ char	*ft_strchr(const char *str, int c)
 	return ((char *)str);
 }
 
+void	*ft_calloc(size_t nitems, size_t size)
+{
+	char	*ptr;
+	size_t	i;
+
+	ptr = malloc(nitems * size);
+	if (!ptr)
+		return (NULL);
+	i = 0;
+	while (i < size)
+	{
+		ptr[i] = '\0';
+		i++;
+	}
+	return (ptr);
+}
+
 // END OF THE OUTILS *******************
 
-void	fill_stach(int fd, char **stach)
+char	*fill_stach(int fd, char *stach)
 {
-	char	buffer[BUFFER_SIZE];
+	char	*buffer;
 	char	*tmp;
 	int		bytes_read;
 
+	if (!stach)
+		stach = ft_calloc(1, 1);
+	buffer = ft_calloc(BUFFER_SIZE + 1, sizeof(char));
 	while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
 	{
-		buffer[bytes_read] = '\0';
-		tmp = ft_strjoin(*stach, buffer);
-		free(*stach);
-		*stach = tmp;
-		if (ft_strchr(*stach, '\n') != NULL)
+		if (bytes_read <= 0)
 		{
-			break ;
+			free(buffer);
+			return (NULL);
 		}
+		buffer[bytes_read] = '\0';
+		tmp = ft_strjoin(stach, buffer);
+		free(stach);
+		stach = tmp;
+		if (ft_strchr(stach, '\n') != NULL)
+			break ;
 	}
-	if (bytes_read == 0 && (*stach)[0] == '\0')
-	{
-		free(*stach);
-		*stach = NULL;
-	}
+	free(buffer);
+	return (stach);
 }
 
-char	*get_line(char **stach)
+char *get_tail(char *stach)
+{
+	char	*next_stach;
+	int		i;
+	int		j;
+
+	i = 0;
+	while (stach[i] && stach[i] != '\n')
+		i++;
+	if (!stach[i])
+	{
+		free(stach);
+		return (NULL);
+	}
+	next_stach = ft_calloc(ft_strlen(stach) - i + 1, sizeof(char));
+	i++;
+	j = 0;
+	while (stach[i])
+		next_stach[j++] = stach[i++];
+	free(stach);
+	return (next_stach);
+}
+
+/* char	*get_line(char **stach)
 {
 	char	*line;
 	int		size;
@@ -134,26 +177,42 @@ char	*get_line(char **stach)
 		(*stach)++;
 	}
 	return (line);
+} */
+
+char	*get_line(char *stach)
+{
+	char	*line;
+	int		i;
+
+	i = 0;
+	if (!stach[i])
+		return (NULL);
+	while (stach[i] && stach[i] != '\n')
+		i++;
+	line = ft_calloc(i + 1, sizeof(char));
+	i = 0;
+	while (stach[i] && stach[i] != '\n')
+	{
+		line[i] = stach[i];
+		i++;
+	}
+	if (stach[i] && stach[i] == '\n')
+		line[i++] = '\n';
+	return (line);
 }
 
 char	*get_next_line(int fd)
 {
-	static char	*stach = NULL;
+	static char	*stach;
 	char		*next_line;
 
-	if (fd < 0)
+	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
+	stach = fill_stach(fd, stach);
 	if (!stach)
-	{
-		stach = malloc(BUFFER_SIZE + 1);
-		if (!stach)
-			return (NULL);
-		stach[0] = '\0';
-	}
-	fill_stach(fd, &stach);
-	if (stach == NULL)
 		return (NULL);
-	next_line = get_line(&stach);
+	next_line = get_line(stach);
+	stach = get_tail(stach);
 	return (next_line);
 }
 

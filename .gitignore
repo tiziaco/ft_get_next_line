@@ -1,4 +1,5 @@
 *.out
 *.txt
 .vscode
+*.dSYM
 get_next_line
