@@ -6,13 +6,13 @@
 /*   By: tiacovel <tiacovel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/28 19:27:30 by tiacovel          #+#    #+#             */
-/*   Updated: 2023/12/01 18:30:50 by tiacovel         ###   ########.fr       */
+/*   Updated: 2023/12/04 13:54:00 by tiacovel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-/* size_t	ft_strlen(const char *str)
+size_t	ft_strlen(const char *str)
 {
 	size_t	i;
 
@@ -70,18 +70,27 @@ void	*ft_calloc(size_t nitems, size_t size)
 	if (!ptr)
 		return (NULL);
 	i = 0;
-	while (i < size * nitems)
+	while (i < nitems * size)
 	{
 		ptr[i] = '\0';
 		i++;
 	}
 	return (ptr);
-} */
+}
+
+
+char	*join_buffer(char *stach, char *buffer)
+{
+	char	*tmp;
+
+	tmp = ft_strjoin(stach, buffer);
+	free(stach);
+	return (tmp);
+}
 
 char	*fill_stach(int fd, char *stach)
 {
 	char	*buffer;
-	char	*tmp;
 	int		bytes_read;
 
 	if (!stach)
@@ -90,16 +99,15 @@ char	*fill_stach(int fd, char *stach)
 	bytes_read = 1;
 	while (bytes_read > 0)
 	{
-		bytes_read = read(fd, buffer, sizeof(buffer));
-		if (bytes_read <= 0)
+		bytes_read = read(fd, buffer, BUFFER_SIZE);
+		if (bytes_read < 0)
 		{
 			free(buffer);
+			free(stach);
 			return (NULL);
 		}
 		buffer[bytes_read] = '\0';
-		tmp = ft_strjoin(stach, buffer);
-		free(stach);
-		stach = tmp;
+		stach = join_buffer(stach, buffer);
 		if (ft_strchr(stach, '\n') != NULL)
 			break ;
 	}
@@ -158,7 +166,9 @@ char	*get_next_line(int fd)
 	char		*next_line;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
+	{
 		return (NULL);
+	}
 	stach = fill_stach(fd, stach);
 	if (!stach)
 		return (NULL);
@@ -178,7 +188,7 @@ int main (void)
 	if (fd == -1)
 		printf("Error opening the file!!");
 
-	for (size_t i = 0; i < 14; i++)
+	for (size_t i = 0; i < 12; i++)
 	{
 		line = get_next_line(fd);
 		printf("%s", line);
